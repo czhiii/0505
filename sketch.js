@@ -5,6 +5,10 @@ let video;
 let handPose;
 let hands = [];
 
+let circleX = 320; // 圓的初始 X 座標
+let circleY = 240; // 圓的初始 Y 座標
+let circleSize = 100; // 圓的寬高
+
 function preload() {
   // Initialize HandPose model with flipped video input
   handPose = ml5.handPose({ flipped: true });
@@ -30,10 +34,33 @@ function setup() {
 function draw() {
   image(video, 0, 0);
 
+  // 繪製圓
+  fill(0, 255, 0); // 圓的顏色
+  noStroke();
+  ellipse(circleX, circleY, circleSize);
+
   // Ensure at least one hand is detected
   if (hands.length > 0) {
     for (let hand of hands) {
       if (hand.confidence > 0.1) {
+        // 獲取食指的座標 (keypoints[8])
+        let indexFinger = hand.keypoints[8];
+        let fingerX = indexFinger.x;
+        let fingerY = indexFinger.y;
+
+        // 檢測食指是否接觸到圓
+        let distance = dist(fingerX, fingerY, circleX, circleY);
+        if (distance < circleSize / 2) {
+          // 如果接觸到圓，讓圓跟隨食指移動
+          circleX = fingerX;
+          circleY = fingerY;
+        }
+
+        // 繪製食指的點
+        fill(255, 0, 0); // 食指的顏色
+        noStroke();
+        circle(fingerX, fingerY, 16);
+
         // Loop through keypoints and draw circles
         for (let i = 0; i < hand.keypoints.length; i++) {
           let keypoint = hand.keypoints[i];
@@ -50,13 +77,6 @@ function draw() {
         }
 
         // Draw lines connecting keypoints 0 to 4
-        strokeWeight(2);
-        if (hand.handedness == "Left") {
-          stroke(255, 0, 255); // Left hand color
-        } else {
-          stroke(255, 255, 0); // Right hand color
-        }
-
         for (let i = 0; i < 4; i++) {
           let start = hand.keypoints[i];
           let end = hand.keypoints[i + 1];
@@ -80,3 +100,4 @@ function draw() {
     }
   }
 }
+
